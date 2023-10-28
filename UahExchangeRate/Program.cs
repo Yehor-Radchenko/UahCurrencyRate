@@ -12,7 +12,7 @@ namespace UahExchangeRate
     internal class Program
     {
         private static TelegramBotClient _botClient;
-        private static ExchangeRateProcessor _exchangeRateProcessor;
+        private static ExchangeRateProcessor _exchangeRateProcessor = new ExchangeRateProcessor();
 
         static async Task Main(string[] args)
         {
@@ -45,7 +45,6 @@ namespace UahExchangeRate
 
             if (DateTime.TryParseExact(messageText, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime date))
             {
-                _exchangeRateProcessor = new ExchangeRateProcessor();
                 PrivatBankApiResponse responseModel = await _exchangeRateProcessor.GetExchangeRatesAsync(date);
 
                 string responseText = _exchangeRateProcessor.GetMessageText(responseModel);
