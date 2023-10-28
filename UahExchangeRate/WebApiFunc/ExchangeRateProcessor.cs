@@ -31,9 +31,24 @@ namespace UahExchangeRate.WebApiFunc
             }
         }
 
-        public string GetMessageText(PrivatBankApiResponse privatBankApiResponse)
+        public async Task<ExchangeRate> GetExchangeRateToCurrenсyAsync(DateTime date, string currencyCode)
         {
-            int exchangeRateCount = privatBankApiResponse.exchangeRate.Count;
+            PrivatBankApiResponse apiResponse = await this.GetExchangeRatesAsync(date);
+
+            foreach (var i in apiResponse.exchangeRate)
+            {
+                if (i.currency == currencyCode)
+                {
+                    return i;
+                }
+            }
+
+            return null;
+        }
+
+        public string GetMessageText(List<ExchangeRate> exchangeRates)
+        {
+            int exchangeRateCount = exchangeRates.Count;
             if (exchangeRateCount <= 0)
             {
                 return "No exchange rate data available for the specified date.";
@@ -43,12 +58,22 @@ namespace UahExchangeRate.WebApiFunc
 
             for (int i = exchangeRateCount; i > 1; i--)
             {
-                stringBuilder.Append(privatBankApiResponse.exchangeRate[i - 1].currency);
-                stringBuilder.Append($" | Sale: {privatBankApiResponse.exchangeRate[i - 1].saleRateNB}");
-                stringBuilder.Append($" | Purchase: {privatBankApiResponse.exchangeRate[i - 1].purchaseRateNB}\n\n");
+                stringBuilder.Append(exchangeRates[i - 1].currency);
+                stringBuilder.Append($" | Sale: {exchangeRates[i - 1].saleRateNB}");
+                stringBuilder.Append($" | Purchase: {exchangeRates[i - 1].purchaseRateNB}\n\n");
             }
 
             return stringBuilder.ToString();
+        }
+
+        public string GetMessageText(ExchangeRate exchangeRate)
+        {
+            if (exchangeRate is null)
+            {
+                return "No exchange rate data available for the specified currency or date.";
+            }
+            string message = $"{exchangeRate.currency} | Sale: {exchangeRate.saleRateNB} | Purchase: {exchangeRate.purchaseRateNB}";
+            return message;
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Exceptions;
@@ -40,20 +41,42 @@ namespace UahExchangeRate
                 return;
 
             var chatId = message.Chat.Id;
-
             Console.WriteLine($"Received a '{messageText}' message in chat {chatId}.");
+            string responseText;
 
-            if (DateTime.TryParseExact(messageText, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime date))
+            if (string.IsNullOrEmpty(messageText))
             {
-                PrivatBankApiResponse responseModel = await _exchangeRateProcessor.GetExchangeRatesAsync(date);
+                responseText = "Inputed string is empty.";
+                await botClient.SendTextMessageAsync(chatId, responseText, cancellationToken: cancellationToken);
+                return;
+            }
 
-                string responseText = _exchangeRateProcessor.GetMessageText(responseModel);
-                
+            var parameters = messageText.Split(' ');
+
+            if (parameters.Length != 1 && parameters.Length != 2) 
+            {
+                responseText = "You have entered more parameters than required. To issue a list of currencies, enter only the date (dd.MM.yyyy format). To issue information on a specific currency enter the currency code and date. Example: '26.07.2019 USD'";
+                await botClient.SendTextMessageAsync(chatId, responseText, cancellationToken: cancellationToken);
+                return;
+            }
+
+            if (!DateTime.TryParseExact(parameters[0], "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            {
+                responseText = "Invalid date format. Use format: dd.MM.yyyy";
+                await botClient.SendTextMessageAsync(chatId, responseText, cancellationToken: cancellationToken);
+                return;
+            }
+
+            if (parameters.Length == 2)
+            {
+                ExchangeRate exchangeRate = await _exchangeRateProcessor.GetExchangeRateToCurrenсyAsync(date, parameters[1]);
+                responseText = _exchangeRateProcessor.GetMessageText(exchangeRate);
                 await botClient.SendTextMessageAsync(chatId, responseText, cancellationToken: cancellationToken);
             }
             else
             {
-                string responseText = "Invalid date format. Use format: dd.MM.yyyy";
+                PrivatBankApiResponse responseModel = await _exchangeRateProcessor.GetExchangeRatesAsync(date);
+                responseText = _exchangeRateProcessor.GetMessageText(responseModel.exchangeRate);
                 await botClient.SendTextMessageAsync(chatId, responseText, cancellationToken: cancellationToken);
             }
         }
