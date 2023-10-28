@@ -11,13 +11,12 @@ namespace UahExchangeRate
 {
     internal class Program
     {
-        private static TelegramBotClient botClient;
-        private static HttpClient httpClient = new HttpClient();
-        private static ExchangeRateProcessor exchangeRateProcessor;
+        private static TelegramBotClient _botClient;
+        private static ExchangeRateProcessor _exchangeRateProcessor;
 
         static async Task Main(string[] args)
         {
-            botClient = new TelegramBotClient("6532844010:AAGJYlhHq0Iu984pmDVApEy_BltI9sLmqWU");
+            _botClient = new TelegramBotClient("6532844010:AAGJYlhHq0Iu984pmDVApEy_BltI9sLmqWU");
 
             using CancellationTokenSource cts = new();
 
@@ -25,11 +24,11 @@ namespace UahExchangeRate
 
             while (!cts.Token.IsCancellationRequested)
             {
-                var updates = await botClient.GetUpdatesAsync(offset, cancellationToken: cts.Token);
+                var updates = await _botClient.GetUpdatesAsync(offset, cancellationToken: cts.Token);
 
                 foreach (var update in updates)
                 {
-                    await HandleUpdateAsync(botClient, update, cts.Token);
+                    await HandleUpdateAsync(_botClient, update, cts.Token);
                     offset = update.Id + 1;
                 }
             }
@@ -46,18 +45,12 @@ namespace UahExchangeRate
 
             if (DateTime.TryParseExact(messageText, "dd.MM.yyyy", null, System.Globalization.DateTimeStyles.None, out DateTime date))
             {
-                exchangeRateProcessor = new ExchangeRateProcessor();
-                PrivatBankApiResponse responseModel = await exchangeRateProcessor.GetExchangeRatesAsync(date);
+                _exchangeRateProcessor = new ExchangeRateProcessor();
+                PrivatBankApiResponse responseModel = await _exchangeRateProcessor.GetExchangeRatesAsync(date);
 
-                string responseText = exchangeRateProcessor.GetMessageText(responseModel);
-                if (!string.IsNullOrEmpty(responseText))
-                {
-                    await botClient.SendTextMessageAsync(chatId, responseText, cancellationToken: cancellationToken);
-                }
-                else
-                {
-                    await botClient.SendTextMessageAsync(chatId, "No exchange rate data available for the specified date.", cancellationToken: cancellationToken);
-                }
+                string responseText = _exchangeRateProcessor.GetMessageText(responseModel);
+                
+                await botClient.SendTextMessageAsync(chatId, responseText, cancellationToken: cancellationToken);
             }
             else
             {

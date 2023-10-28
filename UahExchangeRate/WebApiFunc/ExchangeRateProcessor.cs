@@ -9,13 +9,14 @@ namespace UahExchangeRate.WebApiFunc
 {
     public class ExchangeRateProcessor
     {
+        private HttpClient _httpClient = new HttpClient();
         public async Task<PrivatBankApiResponse> GetExchangeRatesAsync(DateTime date)
         {
-            using (var httpClient = new HttpClient())
+            using (_httpClient)
             {
                 string apiUrl = $"https://api.privatbank.ua/p24api/exchange_rates?json&date={date.ToShortDateString()}";
 
-                HttpResponseMessage response = await httpClient.GetAsync(apiUrl);
+                HttpResponseMessage response = await _httpClient.GetAsync(apiUrl);
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -33,6 +34,11 @@ namespace UahExchangeRate.WebApiFunc
 
         public string GetMessageText(PrivatBankApiResponse privatBankApiResponse)
         {
+            if (privatBankApiResponse is null)
+            {
+                return "No exchange rate data available for the specified date.";
+            }
+
             StringBuilder stringBuilder = new StringBuilder();
 
             for (int i = privatBankApiResponse.exchangeRate.Count; i > 1; i--)
