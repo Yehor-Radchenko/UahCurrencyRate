@@ -1,0 +1,10 @@
+{
+  "name": "telegram-bot-on-glitch",
+  "version": "1.0.0",
+  "description": "Telegram Bot on Glitch",
+  "main": "Program.cs",
+  "scripts": {
+    "start": "dotnet run"
+  },
+  "author": "Radchenko Yehor"
+}
